@@ -1,0 +1,188 @@
+:root {
+  --bg: #f4efe7;
+  --panel: #fffdf9;
+  --border: #d6c7b0;
+  --text: #261c14;
+  --muted: #5d4a3b;
+  --accent: #1f6f78;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+}
+
+.list-page {
+  padding: 2rem 1rem;
+  background: radial-gradient(circle at top, #fff7ec, var(--bg));
+}
+
+.list-main {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.list-header h1 {
+  margin: 0;
+}
+
+.story-list {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.story-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--panel);
+}
+
+.story-card h2 {
+  margin: 0 0 0.5rem;
+}
+
+.story-card .filename {
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+
+.play-link {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+}
+
+.empty-state {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--panel);
+}
+
+.error-state {
+  color: #8b2e2e;
+  margin-top: 1rem;
+}
+
+.player-page {
+  background: radial-gradient(circle at top, #fff8ec, #efe6d7);
+}
+
+.player-page.dark {
+  --bg: #1c1d22;
+  --panel: #252730;
+  --border: #4a4d58;
+  --text: #e8e6e2;
+  --muted: #b2b6c0;
+  --accent: #74c2cc;
+  background: #1c1d22;
+}
+
+.outerContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 1rem;
+  background-size: cover;
+  background-position: center;
+}
+
+.header {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.header.invisible {
+  display: none;
+}
+
+.byline {
+  color: var(--muted);
+  margin: 0.3rem 0 0;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.buttons a {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+}
+
+.buttons a:hover {
+  border-color: var(--accent);
+}
+
+.buttons [disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.container {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.container p {
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.container p.choice {
+  margin-top: 0.6rem;
+}
+
+.container p.choice a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent);
+}
+
+.container p.choice .unclickable {
+  color: var(--muted);
+}
+
+.container img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 0.5rem 0 1rem;
+}
+
+.hide {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.container p,
+.container img {
+  transition: opacity 180ms ease, transform 180ms ease;
+}

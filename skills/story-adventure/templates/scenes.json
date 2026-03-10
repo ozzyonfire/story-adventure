@@ -1,0 +1,18 @@
+{
+  "storySlug": "example-story",
+  "visualStyle": "storybook watercolor with soft evening light",
+  "aspectRatio": "16:9",
+  "scenes": [
+    {
+      "id": "opening-scene",
+      "label": "Opening scene",
+      "narrativePurpose": "Establish the protagonist, central goal, and first pressure.",
+      "sourceBeat": "Beat 1",
+      "inkTarget": "start",
+      "prompt": "A storybook watercolor illustration of the protagonist entering the story's primary setting, with the core conflict visible in the environment, cinematic composition, no text.",
+      "negativePrompt": "text, watermark, logo, modern props that violate canon, extra limbs, distorted face",
+      "imageFilename": "opening-scene.png",
+      "reuseOf": null
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "story-adventure",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bunx vite",
+    "build": "bunx vite build",
+    "preview": "bunx vite preview",
+    "check": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "inkjs": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

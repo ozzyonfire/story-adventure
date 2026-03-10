@@ -1,248 +1,231 @@
 ---
 name: story-adventure
-description: Run interactive choose-your-own-adventure storytelling with persistent markdown save data. Use when a user wants to play a branching story, create a new story run, resume an existing run, track inventory/stats/flags, or maintain continuity across turns with autosave after every choice.
+description: Build interactive choose-your-own-adventure stories with an Ink-first pipeline. Use when a user wants to create or refine story planning artifacts, generate an Ink script, run critique/finalization passes, and validate compilability with the Ink Node toolchain.
 ---
 
 # Story Adventure
 
-Run a structured choose-your-own-adventure game with persistent markdown saves.
+Use this skill to produce a complete Ink story package with prewriting, scene-imaging, critique, and build phases.
+
+## Workflow Contract
+
+Every story run uses this fixed artifact set:
+
+- `premise.md`
+- `outline.md`
+- `canon.md`
+- `scenes.json`
+- `adventure.ink`
+- `feedback.md`
+
+Rules:
+
+1. Artifact names are fixed and mandatory.
+2. `canon.md` is the authoritative continuity source.
+3. `scenes.json` is the authoritative scene-imaging manifest.
+4. `adventure.ink` must conform to `canon.md` and `scenes.json`.
+5. Critique handoff uses `feedback.md` only.
+6. Do not introduce legacy files (`index.md`, `world.md`, `state.md`, `log/*`) for this workflow.
 
 ## Ask Setup Questions First
 
-For a **new story**, ask exactly 4 setup questions before generating content:
+For a new story, ask exactly 4 setup questions before generating content:
 
 1. What tone should the story use?
 2. What setting should the story use?
 3. Who is the protagonist?
 4. How long/complex should the story be?
 
-If the user already provided one or more answers, only ask for missing items.
+If the user already answered some items, ask only for missing items.
 
-For a **resume request**, skip setup questions and load existing files.
+## Directory and File Initialization
 
-## Plan Mode Suggestion
+Use a story directory rooted at user-provided path when available. If no path is given, default to:
 
-When constructing the story plan (premise, arc, major beats, and endings), suggest that the user can switch to Plan Mode if they want to refine scope, constraints, or implementation details before gameplay begins.
-
-## Use Configurable Storage Root
-
-Determine the storage root in this order:
-
-1. User-provided path in current request
-2. Previously established path in conversation/session
-3. Default: `~/.config/stories`
-
-Create and use story path:
-
-- `<root>/<slug>/`
+- `~/.config/stories/<slug>/`
 
 Slug rules:
 
-- Derive from title or premise
-- Lowercase letters, digits, hyphens only
-- Replace spaces/punctuation with hyphens
-- Collapse repeated hyphens
-- Trim leading/trailing hyphens
+- Lowercase letters, digits, and hyphens only.
+- Replace spaces/punctuation with hyphens.
+- Collapse repeated hyphens.
+- Trim leading/trailing hyphens.
 
-## Initialize Story Files
+On new story creation, initialize `premise.md`, `outline.md`, `canon.md`, `scenes.json`, and `feedback.md` from `templates/`.
+Create or refine `adventure.ink` by delegating to the `ink-story-writer` skill guidance.
 
-For a new run, create these files:
+## Four-Phase Pipeline
 
-- `index.md`
+### Phase 1: Prewrite
+
+Create and fill:
+
+1. `premise.md`
+2. `outline.md`
+3. `canon.md`
+
+Requirements:
+
+- Premise is concise and goal-oriented.
+- Outline includes major beats and branch intent.
+- Canon defines immutable facts, constraints, character truth, and visual continuity anchors.
+- Keep continuity-compatible with [`references/story-quality.md`](references/story-quality.md).
+
+Visual continuity constraints to capture in `canon.md`:
+
+- protagonist appearance and silhouette anchors,
+- recurring locations and environmental anchors,
+- recurring props, symbols, or creatures that must stay visually consistent,
+- tone and palette direction,
+- forbidden contradictions an image must never introduce.
+
+### Phase 2: Scene Planning
+
+Create and fill `scenes.json` after prewrite artifacts are stable and before critique or Ink build.
+
+The manifest uses this fixed shape:
+
+```json
+{
+  "storySlug": "example-story",
+  "visualStyle": "storybook watercolor",
+  "aspectRatio": "16:9",
+  "scenes": [
+    {
+      "id": "opening-gate",
+      "label": "Opening at the gate",
+      "narrativePurpose": "Establish the protagonist, goal, and threat.",
+      "sourceBeat": "Beat 1",
+      "inkTarget": "start",
+      "prompt": "Detailed image prompt here.",
+      "negativePrompt": "modern clothing, text, watermark",
+      "imageFilename": "opening-gate.png",
+      "reuseOf": null
+    }
+  ]
+}
+```
+
+Rules:
+
+- Generate one planned image per narrative scene or beat, not per knot or stitch.
+- Multiple Ink locations may reuse an earlier image by setting `reuseOf` to the original scene `id`.
+- `imageFilename` must be normalized as `<scene-id>.png`.
+- Use one story-level visual style across all scenes.
+- Default `aspectRatio` to `16:9` unless the user requests another format.
+- `inkTarget` must point at the scene entrypoint where the image first appears in `adventure.ink`.
+- Every planned scene must have a concrete narrative purpose and a continuity-safe prompt.
+
+Image generation rules:
+
+- Use the `nano-banana` skill for all scene-image generation.
+- Write scene images to `${STORIES_DIR:-./stories}/<slug>/images/`.
+- Use `scenes.json` as the source of truth for prompt text, reuse, and filenames.
+- If generation is blocked or unavailable, still produce `scenes.json`, keep stable image paths for later fulfillment, and record the blocked step in `feedback.md`.
+
+### Phase 3: Critique (Background Agent)
+
+Invoke the separate `story-critic` skill as a background pass.
+
+Inputs:
+
+- `premise.md`
 - `outline.md`
-- `world.md`
-- `state.md`
-- `log/scene-0001.md` (first playable scene)
+- `canon.md`
+- `scenes.json`
+- optional draft `adventure.ink`
 
-All story data must stay inside the story folder.
+Output:
 
-## Required File Schemas
+- `feedback.md` with required headings:
+  - `## Continuity`
+  - `## Choice Quality`
+  - `## Pacing`
+  - `## Tone`
+  - `## Scene Imagery`
+  - `## Ink Structure`
+  - `## Actionable Fixes`
+  - `## Ink Compile Report`
 
-Use these schemas so future turns remain consistent.
+The critique stage proposes changes; it does not rewrite story files directly unless explicitly requested.
 
-### `index.md`
+### Phase 4: Build (Ink Construction)
 
-```markdown
----
-story_title: "<title>"
-slug: "<slug>"
-storage_root: "<root>"
-created_at: "<ISO-8601>"
-updated_at: "<ISO-8601>"
-status: "active"
-current_scene: 1
-latest_scene_file: "log/scene-0001.md"
----
+Generate or refine `adventure.ink` using prewrite artifacts, `scenes.json`, and critique feedback.
 
-# <title>
+When authoring or fixing Ink DSL details (knot/stitch structure, diverts, list/state modeling, compile remediation), delegate to the `ink-story-writer` skill guidance.
 
-## Quick Resume
-- Premise: <1-2 sentence premise>
-- Current objective: <current player objective>
-- Last consequence: <last significant outcome>
+Image wiring rules:
+
+- Each planned scene entrypoint named by `inkTarget` must emit exactly one `# IMAGE: /stories/<slug>/images/<imageFilename>` tag before scene prose continues.
+- Insert the image tag at the first paragraph of the scene entrypoint.
+- If `reuseOf` is set, reuse the original scene image path instead of generating a duplicate file.
+- Do not invent ad hoc image filenames or image locations outside `scenes.json`.
+- If image generation did not run, keep the stable `# IMAGE:` path in Ink anyway so the story remains viewer-ready.
+
+Compile checkpoints (Node Ink toolchain):
+
+1. Draft checkpoint: compile after initial `adventure.ink` draft.
+2. Final checkpoint: compile again after critique-driven revisions.
+
+At each checkpoint:
+
+- Record compile status in `feedback.md` under `## Ink Compile Report`.
+- Include command run, pass/fail result, and errors/warnings summary.
+
+Completion export for web viewer:
+
+1. When the story is marked finished, compile `adventure.ink` to a viewer-consumable JSON file.
+2. Resolve output directory from `STORIES_DIR` if set; otherwise use `./stories`.
+3. Write compiled output as `<output-dir>/<slug>.json`.
+4. Write scene images as `<output-dir>/<slug>/images/<scene-id>.png`.
+5. Record the final compiled output path and image output directory in `feedback.md` under `## Ink Compile Report`.
+
+## Ink Compilation Guidance
+
+Use the Ink Node toolchain for compile validation.
+
+Recommended command patterns:
+
+```bash
+npx inklecate -o story.json adventure.ink
 ```
 
-### `outline.md`
-
-```markdown
-# Story Outline
-
-## Premise
-<short premise>
-
-## Protagonist
-<character summary>
-
-## Main Arc
-- Beginning: <setup>
-- Middle: <escalation>
-- Climax: <peak conflict>
-- Ending candidates:
-  1. <ending option A>
-  2. <ending option B>
-
-## Major Beats
-1. <beat 1>
-2. <beat 2>
-3. <beat 3>
+```bash
+npx inklecate -o "${STORIES_DIR:-./stories}/<slug>.json" adventure.ink
 ```
 
-### `world.md`
+Notes:
 
-```markdown
-# World Bible
+- The generated JSON is build output and not part of the required artifact contract.
+- Generated scene images are build output and not part of the required artifact contract.
+- Compilation issues should be summarized in `feedback.md`.
 
-## Setting
-<time/place/atmosphere>
+## Quality and Continuity Checks
 
-## Factions and NPCs
-- <name>: <goal and relationship to protagonist>
+Before finalizing build phase:
 
-## Rules and Constraints
-- <magic/tech/social limits>
+1. Confirm all branch-critical facts in `adventure.ink` match `canon.md`.
+2. Confirm each `inkTarget` in `scenes.json` maps to a real scene entrypoint in `adventure.ink`.
+3. Confirm `IMAGE:` tags use the exact viewer path derived from `scenes.json`.
+4. Confirm choice branches are meaningfully distinct.
+5. Confirm protagonist goal and stakes remain clear.
+6. Confirm tone is consistent with setup and scene imagery.
 
-## Continuity Facts
-- <fact that must remain true>
-```
-
-### `state.md`
-
-Keep canonical game state in YAML frontmatter and notes below.
-
-```markdown
----
-player:
-  name: "<name>"
-  health: 100
-  morale: 50
-  location: "<starting location>"
-inventory:
-  - "<item>"
-flags:
-  met_key_npc: false
-  major_secret_known: false
-quests:
-  active:
-    - "<quest>"
-  completed: []
-turn:
-  scene_number: 1
-  last_choice_id: null
----
-
-# State Notes
-- Track non-quantitative status updates.
-- Explain recent state changes briefly.
-```
-
-### `log/scene-XXXX.md`
-
-Each turn must produce one scene file with zero-padded numbering.
-
-```markdown
----
-scene_number: 1
-timestamp: "<ISO-8601>"
-choice_selected_id: null
----
-
-# Scene 0001
-
-## Scene Summary
-<what happened>
-
-## Choices Presented
-1. <choice 1>
-2. <choice 2>
-3. <choice 3>
-
-## Choice Selected
-- ID: <1|2|3 or null for opening scene>
-- Player input: <verbatim or normalized input>
-
-## Immediate Consequence
-<result of selected choice>
-
-## State Diff
-- Inventory: <added/removed items>
-- Stats: <health/morale/etc changes>
-- Flags: <flag changes>
-- Quests: <active/completed changes>
-```
-
-## Gameplay Loop
-
-For every turn after initialization:
-
-1. Read `index.md`, `state.md`, latest scene file, and relevant continuity from `outline.md` + `world.md`.
-2. Write next narrative segment.
-3. Offer numbered choices with distinct consequences.
-4. Accept player choice and normalize it to a selected choice ID.
-5. Create next `log/scene-XXXX.md` with summary, choices, selected ID, consequence, and state diff.
-6. Update `state.md` frontmatter to reflect canonical latest state.
-7. Update `index.md` fields: `updated_at`, `current_scene`, `latest_scene_file`, quick resume section.
-
-Autosave on **every** turn. Do not wait for manual save.
-
-## Continuity and Quality Rules
-
-Before finalizing each turn:
-
-1. Verify the scene does not contradict established facts in `world.md`.
-2. Verify inventory/flags/quests in scene output match `state.md` updates.
-3. Verify choices are meaningful (not cosmetic) and consequences are distinct.
-4. Verify stakes and objective clarity remain visible to the player.
-
-Read and apply: [`references/story-quality.md`](references/story-quality.md)
+Apply the quality bar in [`references/story-quality.md`](references/story-quality.md).
 
 ## Resume Behavior
 
-When user asks to continue an existing story:
+When continuing an existing story directory:
 
-1. Locate story folder via slug/path.
-2. Load `index.md` to find latest scene.
-3. Load `state.md` as source of truth.
-4. Continue from latest scene and keep numbering sequential.
+1. Load all six required artifacts.
+2. If `premise.md`, `outline.md`, `canon.md`, `scenes.json`, or `feedback.md` are missing, create them from templates and annotate assumptions in `feedback.md`.
+3. If `adventure.ink` is missing, regenerate it via `ink-story-writer` from prewrite artifacts, `scenes.json`, and critique notes.
+4. If `scenes.json` exists but `adventure.ink` lacks matching `IMAGE:` tags, repair the tag wiring during the build phase.
+5. Continue from current `adventure.ink` plus latest critique notes.
 
-If files are missing or malformed, repair minimally and note assumptions in `index.md` quick resume text.
+## Player-Facing Behavior
 
-## Invisible Persistence Rule
+Treat file management and process stages as internal details unless the user asks for implementation details.
 
-Treat storage, save files, markdown structure, flags, inventory bookkeeping, and folder layout as internal implementation details.
-
-- Do not mention files, folders, markdown, frontmatter, logs, slugs, save data, or state-tracking machinery during normal play.
-- Do not narrate that you are reading, writing, updating, saving, loading, or checking internal story data.
-- Do not explain persistence behavior unless the user explicitly asks about implementation details.
-- Surface story state only in player-facing terms inside the fiction: what the character carries, knows, fears, owes, or has changed in the world.
-
-## Output Expectations During Play
-
-- Keep narration concise but vivid.
-- Provide exactly 3 numbered choices unless user requests otherwise.
-- Keep choice IDs stable within the scene.
-- Never mutate historical scene files; append new scene files only.
-- Act primarily as narrator/storyteller, not as a process explainer.
-- Keep background/process commentary minimal unless the user explicitly asks for implementation details.
-- Stay in full narrative mode once the story begins.
-- Describe consequences in-story rather than as stat, flag, inventory, or system updates.
-- If the player gains or loses something, present it as part of the fiction, not as bookkeeping.
+When user wants narrative output, stay in storyteller mode and avoid process narration.

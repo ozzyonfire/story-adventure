@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ink Story Writer"
+  short_description: "Compose, critique, and compile branching Ink stories."
+  default_prompt: "Create or refine an Ink story package from premise through compile-ready adventure.ink."

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ink Adventure Viewer</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/list.ts"></script>
+  </head>
+  <body class="list-page">
+    <main class="list-main">
+      <header class="list-header">
+        <h1>Ink Adventure Viewer</h1>
+        <p id="story-count">Loading stories...</p>
+      </header>
+      <section>
+        <ul id="story-list" class="story-list"></ul>
+        <p id="empty-state" class="empty-state" hidden>No stories found in <code>/stories</code>.</p>
+        <p id="error-state" class="error-state" hidden></p>
+      </section>
+    </main>
+  </body>
+</html>
